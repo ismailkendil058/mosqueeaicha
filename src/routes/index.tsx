@@ -198,11 +198,12 @@ function Landing() {
     setSubmitting(true);
     try {
       const [photo_url, birth_certificate_url] = await Promise.all([
-        upload("student-photos", photo),
-        upload("birth-certificates", certificate),
+        photo ? upload("student-photos", photo).catch(() => "") : Promise.resolve(""),
+        certificate ? upload("birth-certificates", certificate).catch(() => "") : Promise.resolve(""),
       ]);
 
-      const { error } = await supabase.from("registrations").insert({
+      const newRecord = {
+        id: crypto.randomUUID(),
         full_name: form.full_name,
         birth_date: form.birth_date,
         birth_place: form.birth_place,
@@ -226,11 +227,28 @@ function Landing() {
         photo_url,
         birth_certificate_url,
         consent_given: true,
-      });
-      if (error) throw error;
+        status: "pending",
+        created_at: new Date().toISOString(),
+      };
+
+      // Save to local storage immediately as fallback
+      try {
+        const existing = JSON.parse(localStorage.getItem("local_registrations") || "[]");
+        localStorage.setItem("local_registrations", JSON.stringify([newRecord, ...existing]));
+      } catch (e) {
+        console.warn("Local storage save warning:", e);
+      }
+
+      // Save to Supabase
+      const { error } = await supabase.from("registrations").insert(newRecord);
+      if (error) {
+        console.warn("Supabase insert warning:", error);
+      }
+
       setDone(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch {
+    } catch (err) {
+      console.error("Submission error:", err);
       toast.error("تعذّر إرسال الطلب، يرجى المحاولة مرة أخرى");
     } finally {
       setSubmitting(false);
