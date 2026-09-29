@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,14 @@ export const Route = createFileRoute("/admin/login")({
       { property: "og:title", content: "دخول الإدارة — مسجد عائشة أم المؤمنين أولاد هداج" },
       { property: "og:description", content: "فضاء خاص بإدارة مسجد عائشة أم المؤمنين أولاد هداج." },
       { name: "robots", content: "noindex" },
+      { name: "theme-color", content: "#ffffff" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "Masjid Admin" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+    ],
+    links: [
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   component: AdminLogin,
@@ -27,6 +35,12 @@ function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      void navigator.serviceWorker.register("/service-worker.js", { scope: "/admin/" });
+    }
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

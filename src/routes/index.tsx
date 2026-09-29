@@ -245,18 +245,12 @@ function Landing() {
         created_at: new Date().toISOString(),
       };
 
-      // Save to local storage immediately as fallback
-      try {
-        const existing = JSON.parse(localStorage.getItem("local_registrations") || "[]");
-        localStorage.setItem("local_registrations", JSON.stringify([newRecord, ...existing]));
-      } catch (e) {
-        console.warn("Local storage save warning:", e);
-      }
-
-      // Save to Supabase
+      // Save registrations only to Supabase.
       const { error } = await supabase.from("registrations").insert(newRecord);
       if (error) {
         console.warn("Supabase insert warning:", error);
+        toast.error("Could not submit registration. Please try again.");
+        return;
       }
 
       setDone(true);

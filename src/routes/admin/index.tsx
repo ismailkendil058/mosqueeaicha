@@ -152,7 +152,12 @@ function AdminDashboard() {
   const [certificateOpen, setCertificateOpen] = useState(false);
   const [downloadingCertificate, setDownloadingCertificate] = useState(false);
 
-  const { data: remoteData, isLoading } = useQuery({
+  useEffect(() => {
+    // Remove registration copies left by older versions that used localStorage.
+    localStorage.removeItem("local_registrations");
+  }, []);
+
+  const { data: remoteData, isLoading, isError } = useQuery({
     queryKey: ["registrations"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -161,7 +166,7 @@ function AdminDashboard() {
         .order("created_at", { ascending: false });
       if (error) {
         console.warn("Supabase fetch warning:", error);
-        return [];
+        throw error;
       }
       return (data ?? []) as unknown as Registration[];
     },
@@ -171,42 +176,26 @@ function AdminDashboard() {
   const certUrl = useSignedUrl("birth-certificates", selected?.birth_certificate_url);
   const certificateIsPdf = selected?.birth_certificate_url.toLowerCase().split("?")[0].endsWith(".pdf") ?? false;
 
-  const mergedData = useMemo(() => {
-    let local: Registration[] = [];
-    try {
-      local = JSON.parse(localStorage.getItem("local_registrations") || "[]");
-    } catch {
-      local = [];
-    }
-    const map = new Map<string, Registration>();
-    local.forEach((r) => map.set(r.id, r));
-    (remoteData ?? []).forEach((r) => map.set(r.id, r));
-
-    return Array.from(map.values()).sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  }, [remoteData]);
+  const registrations = remoteData ?? [];
 
   const rows = useMemo(() => {
     const q = search.trim();
-    return mergedData.filter((r) => {
+    return registrations.filter((r) => {
       const matchQ =
         !q || r.full_name.includes(q) || r.guardian_phone.includes(q) || r.guardian_name.includes(q);
       const matchLevel = levelFilter === "all" || r.education_level === levelFilter;
       const matchStatus = statusFilter === "all" || r.status === statusFilter;
       return matchQ && matchLevel && matchStatus;
     });
-  }, [mergedData, search, levelFilter, statusFilter]);
+  }, [registrations, search, levelFilter, statusFilter]);
 
   const updateStatus = async (id: string, status: string) => {
-    try {
-      const local: Registration[] = JSON.parse(localStorage.getItem("local_registrations") || "[]");
-      const updated = local.map((r) => (r.id === id ? { ...r, status } : r));
-      localStorage.setItem("local_registrations", JSON.stringify(updated));
-    } catch {
-      // ignore
+    const { error } = await supabase.from("registrations").update({ status }).eq("id", id);
+    if (error) {
+      console.warn("Supabase update warning:", error);
+      toast.error("Could not update registration. Please try again.");
+      return;
     }
-    await supabase.from("registrations").update({ status }).eq("id", id);
     toast.success("تم تحديث الحالة");
     setSelected((prev) => (prev && prev.id === id ? { ...prev, status } : prev));
     queryClient.invalidateQueries({ queryKey: ["registrations"] });
@@ -381,7 +370,14 @@ function AdminDashboard() {
                 </TableCell>
               </TableRow>
             )}
-            {!isLoading && rows.length === 0 && (
+            {isError && (
+              <TableRow>
+                <TableCell colSpan={4} className="py-10 text-center text-destructive">
+                  Could not load registrations from Supabase. Please try again.
+                </TableCell>
+              </TableRow>
+            )}
+            {!isLoading && !isError && rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
                   لا توجد طلبات تسجيل.
