@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>رمز QR للتسجيل — مسجد عائشة</title>
+  <title>رمز QR للتسجيل — مسجد عائشة أم المؤمنين أولاد هداج</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -244,19 +244,27 @@
 
     @media print {
       @page {
-        size: auto;
+        size: A4 portrait;
         margin: 0;
       }
       html, body {
+        width: 210mm !important;
+        height: 297mm !important;
+        max-height: 297mm !important;
+        overflow: hidden !important;
         background-color: #FAF8F5 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
-        min-height: 100vh;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        padding: 2rem 1rem !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        page-break-after: avoid !important;
+        page-break-before: avoid !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       body::before {
         content: "" !important;
@@ -272,15 +280,23 @@
         display: none !important;
       }
       .poster-card {
+        max-width: 175mm !important;
+        width: 175mm !important;
+        padding: 2.2rem 1.5rem !important;
         box-shadow: 0 10px 30px rgba(142, 11, 13, 0.08) !important;
         border: 2px solid #8E0B0D !important;
         background-color: #FFFFFF !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin: auto !important;
       }
       .logo-wrapper, .qr-container, .url-badge, .qr-center-logo {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
     }
   </style>
@@ -297,12 +313,12 @@
     </div>
 
     <div class="logo-wrapper">
-      <img src="logo.png" alt="شعار مسجد عائشة" />
+      <img src="logo.png" alt="شعار مسجد عائشة أم المؤمنين أولاد هداج" />
     </div>
 
-    <h1>مسجد عائشة</h1>
+    <h1>مسجد عائشة أم المؤمنين أولاد هداج</h1>
     <div class="subtitle">المدرسة القرآنية » الفلاح «</div>
-    <p class="tagline">امسح الرمز للتسجيل في حلقات تحفيظ القرآن الكريم</p>
+    <p class="tagline">امسح الرمز للتسجيل في المدرسة القرآنية</p>
 
     <!-- QR Code Box -->
     <div class="qr-container">

@@ -12,10 +12,10 @@ export const Route = createFileRoute("/admin/login")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "دخول الإدارة — مسجد عائشة" },
-      { name: "description", content: "صفحة دخول إدارة مسجد عائشة لمتابعة طلبات التسجيل." },
-      { property: "og:title", content: "دخول الإدارة — مسجد عائشة" },
-      { property: "og:description", content: "فضاء خاص بإدارة مسجد عائشة." },
+      { title: "دخول الإدارة — مسجد عائشة أم المؤمنين أولاد هداج" },
+      { name: "description", content: "صفحة دخول إدارة مسجد عائشة أم المؤمنين أولاد هداج لمتابعة طلبات التسجيل." },
+      { property: "og:title", content: "دخول الإدارة — مسجد عائشة أم المؤمنين أولاد هداج" },
+      { property: "og:description", content: "فضاء خاص بإدارة مسجد عائشة أم المؤمنين أولاد هداج." },
       { name: "robots", content: "noindex" },
     ],
   }),

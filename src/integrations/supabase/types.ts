@@ -36,6 +36,9 @@ export type Database = {
           id: string
           notes: string | null
           photo_url: string
+          social_status: string | null
+          family_status: string[]
+          siblings_count: number | null
           speech_issue: boolean
           status: string
           vision_issue: boolean
@@ -61,6 +64,9 @@ export type Database = {
           id?: string
           notes?: string | null
           photo_url: string
+          social_status?: string | null
+          family_status?: string[]
+          siblings_count?: number | null
           speech_issue?: boolean
           status?: string
           vision_issue?: boolean
@@ -86,6 +92,9 @@ export type Database = {
           id?: string
           notes?: string | null
           photo_url?: string
+          social_status?: string | null
+          family_status?: string[]
+          siblings_count?: number | null
           speech_issue?: boolean
           status?: string
           vision_issue?: boolean

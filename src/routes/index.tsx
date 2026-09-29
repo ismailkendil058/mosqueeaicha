@@ -26,16 +26,16 @@ import logo from "@/assets/masjid-logo.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "مسجد عائشة — تسجيل حلقات تحفيظ القرآن الكريم" },
+      { title: "مسجد عائشة أم المؤمنين أولاد هداج — المدرسة القرآنية" },
       {
         name: "description",
         content:
-          "استمارة تسجيل الطلبة في حلقات تحفيظ القرآن الكريم بمسجد عائشة: معلومات الطالب، المستوى الدراسي، الحالة الصحية ومعلومات ولي الأمر.",
+          "استمارة تسجيل الطلبة في المدرسة القرآنية بمسجد عائشة أم المؤمنين أولاد هداج: معلومات الطالب، المستوى الدراسي، الحالة الصحية ومعلومات ولي الأمر.",
       },
-      { property: "og:title", content: "مسجد عائشة — تسجيل حلقات تحفيظ القرآن الكريم" },
+      { property: "og:title", content: "مسجد عائشة أم المؤمنين أولاد هداج — المدرسة القرآنية" },
       {
         property: "og:description",
-        content: "سجّلوا أبناءكم في حلقات تحفيظ القرآن الكريم بمسجد عائشة.",
+        content: "سجّلوا أبناءكم في المدرسة القرآنية بمسجد عائشة أم المؤمنين أولاد هداج.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -74,6 +74,14 @@ const HEALTH = [
   "الصرع",
   "التشنجات",
   "الرعاف",
+] as const;
+
+const SOCIAL_STATUSES = ["جيدة", "متوسطة", "ضعيفة"] as const;
+const FAMILY_STATUSES = [
+  "يتيم الأب",
+  "يتيم الأم",
+  "يتيم الأبوين",
+  "الوالدان منفصلان",
 ] as const;
 
 const SCHOOL_RULES = [
@@ -131,6 +139,9 @@ function Landing() {
     guardian_phone: "",
     guardian_email: "",
   });
+  const [socialStatus, setSocialStatus] = useState("");
+  const [familyStatuses, setFamilyStatuses] = useState<string[]>([]);
+  const [siblingsCount, setSiblingsCount] = useState("");
   const [vision, setVision] = useState(false);
   const [hearing, setHearing] = useState(false);
   const [speech, setSpeech] = useState(false);
@@ -198,8 +209,8 @@ function Landing() {
     setSubmitting(true);
     try {
       const [photo_url, birth_certificate_url] = await Promise.all([
-        photo ? upload("student-photos", photo).catch(() => "") : Promise.resolve(""),
-        certificate ? upload("birth-certificates", certificate).catch(() => "") : Promise.resolve(""),
+        photo ? upload("student-photos", photo) : Promise.resolve(""),
+        certificate ? upload("birth-certificates", certificate) : Promise.resolve(""),
       ]);
 
       const newRecord = {
@@ -213,6 +224,9 @@ function Landing() {
         education_level: form.education_level,
         academic_year: form.academic_year,
         arrival_method: form.arrival_method,
+        social_status: socialStatus || null,
+        family_status: familyStatuses,
+        siblings_count: siblingsCount === "" ? null : Number(siblingsCount),
         vision_issue: vision,
         hearing_issue: hearing,
         speech_issue: speech,
@@ -280,18 +294,23 @@ function Landing() {
         <div className="relative mx-auto mt-14 w-fit">
           <img
             src={logo}
-            alt="شعار مسجد عائشة"
+            alt="شعار مسجد عائشة أم المؤمنين أولاد هداج"
             width={816}
             height={816}
             className="h-32 w-32 rounded-3xl border border-primary/20 bg-card object-contain p-3 sm:h-40 sm:w-40"
           />
           <Crescent className="absolute -left-5 top-0 h-7 w-7 text-primary" />
         </div>
-        <h1 className="mt-12 text-4xl text-foreground sm:text-6xl">مسجد عائشة</h1>
-        <p className="mt-6 text-xl text-primary sm:text-2xl">حلقات تحفيظ القرآن الكريم</p>
+        <h1 className="mx-auto mt-12 max-w-2xl text-4xl leading-snug text-foreground sm:text-6xl sm:leading-normal">
+          <span className="block">مسجد عائشة أم المؤمنين</span>
+          <span className="block">أولاد هداج</span>
+        </h1>
+        <p className="mt-6 text-xl text-primary sm:text-2xl">المدرسة القرآنية</p>
         <p className="mx-auto mt-8 max-w-xl text-base leading-loose text-muted-foreground">
-          نفتح باب التسجيل لأبنائكم في حلقات تحفيظ كتاب الله، في جوٍّ تربوي هادئ
-          وبإشراف أساتذة مؤهّلين. سجّلوا أبناءكم اليوم.
+          خَيْرُكُمْ مَنْ تَعَلَّمَ القُرْآنَ وَعَلَّمَهُ
+        </p>
+        <p className="mx-auto mt-3 max-w-xl text-base leading-loose text-muted-foreground">
+          علموا أولادكم القرآن والقرآن يعلمهم كل شيء
         </p>
         <div className="mt-12">
           <Button
@@ -382,6 +401,7 @@ function Landing() {
               onChange={(e) => set("notes", e.target.value)}
             />
           </Field>
+
         </section>
 
         <Ornament className="my-20" />
@@ -556,6 +576,57 @@ function Landing() {
 
         <Ornament className="my-20" />
 
+        <section className="space-y-10">
+          <SectionTitle>الوضعية الاجتماعية</SectionTitle>
+          <div className="grid gap-3 text-center sm:grid-cols-2">
+            {SOCIAL_STATUSES.map((status) => (
+              <label key={status} className="flex items-center justify-center gap-3 text-sm cursor-pointer">
+                <Checkbox
+                  checked={socialStatus === status}
+                  onCheckedChange={(checked) =>
+                    setSocialStatus(checked === true ? status : "")
+                  }
+                />
+                {status}
+              </label>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-sm font-semibold text-center">الحالة العائلية</p>
+            <div className="grid gap-3 text-center sm:grid-cols-2">
+              {FAMILY_STATUSES.map((status) => (
+                <label key={status} className="flex items-center justify-center gap-3 text-sm cursor-pointer">
+                  <Checkbox
+                    checked={familyStatuses.includes(status)}
+                    onCheckedChange={(checked) =>
+                      setFamilyStatuses((current) =>
+                        checked === true
+                          ? [...current, status]
+                          : current.filter((item) => item !== status)
+                      )
+                    }
+                  />
+                  {status}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <Field label="عدد الإخوة">
+            <Input
+              type="number"
+              min="0"
+              inputMode="numeric"
+              value={siblingsCount}
+              onChange={(e) => setSiblingsCount(e.target.value)}
+              className="mx-auto max-w-xs"
+            />
+          </Field>
+        </section>
+
+        <Ornament className="my-20" />
+
         {/* SCHOOL RULES SECTION */}
         <section className="space-y-6">
           <div className="space-y-2 text-center">
@@ -618,7 +689,7 @@ function Landing() {
       </form>
 
       <footer className="border-t border-border py-10 text-center text-sm text-muted-foreground">
-        مسجد عائشة — حلقات تحفيظ القرآن الكريم
+        مسجد عائشة أم المؤمنين أولاد هداج — المدرسة القرآنية
       </footer>
     </main>
   );

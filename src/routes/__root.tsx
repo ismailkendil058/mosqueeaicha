@@ -78,10 +78,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "مسجد عائشة — حلقات تحفيظ القرآن الكريم" },
+      { title: "مسجد عائشة أم المؤمنين أولاد هداج — المدرسة القرآنية" },
       {
         name: "description",
-        content: "استمارة تسجيل الطلبة في حلقات تحفيظ القرآن الكريم بمسجد عائشة",
+        content: "استمارة تسجيل الطلبة في المدرسة القرآنية بمسجد عائشة أم المؤمنين أولاد هداج",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
