@@ -44,7 +44,7 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
-const LEVELS = ["تحضيري", "الابتدائي", "المتوسط", "الثانوي"] as const;
+const LEVELS = ["تحضيري", "الابتدائي", "المتوسط", "الثانوي", "جامعي"] as const;
 
 const YEARS: Record<string, string[]> = {
   تحضيري: ["القسم التحضيري"],
@@ -57,6 +57,13 @@ const YEARS: Record<string, string[]> = {
   ],
   المتوسط: ["السنة الأولى", "السنة الثانية", "السنة الثالثة", "السنة الرابعة"],
   الثانوي: ["السنة الأولى", "السنة الثانية", "السنة الثالثة"],
+  جامعي: [
+    "السنة الأولى",
+    "السنة الثانية",
+    "السنة الثالثة",
+    "السنة الرابعة",
+    "السنة الخامسة",
+  ],
 };
 
 const ARRIVAL = [
@@ -177,7 +184,41 @@ function Landing() {
       allRulesChecked
   );
 
-  const upload = async (bucket: string, file: File) => {
+  const optimizeImage = async (file: File, maxDimension: number, quality: number) => {
+    if (!file.type.startsWith("image/")) return file;
+
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const context = canvas.getContext("2d");
+      if (!context) {
+        bitmap.close();
+        return file;
+      }
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", quality),
+      );
+      if (!blob || blob.size >= file.size) return file;
+      const baseName = file.name.replace(/\.[^.]+$/, "") || "image";
+      return new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
+    } catch {
+      // Keep the original if this browser cannot decode the selected image.
+      return file;
+    }
+  };
+
+  const upload = async (bucket: string, sourceFile: File) => {
+    const file = await optimizeImage(
+      sourceFile,
+      bucket === "student-photos" ? 1200 : 1800,
+      bucket === "student-photos" ? 0.72 : 0.78,
+    );
     const ext = file.name.split(".").pop() ?? "jpg";
     const path = `${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from(bucket).upload(path, file, {

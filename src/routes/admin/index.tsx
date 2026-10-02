@@ -60,7 +60,7 @@ const STATUS_LABEL: Record<string, string> = {
   accepted: "مقبول",
   rejected: "مرفوض",
 };
-const LEVELS = ["تحضيري", "الابتدائي", "المتوسط", "الثانوي"];
+const LEVELS = ["تحضيري", "الابتدائي", "المتوسط", "الثانوي", "جامعي"];
 
 export const Route = createFileRoute("/admin/")({
   ssr: false,
@@ -133,11 +133,14 @@ function StorageImage({
   return <img src={url} alt={alt} className={className} onError={() => setFailed(true)} />;
 }
 
-function Thumb({ path }: { path: string }) {
-  const url = useSignedUrl("student-photos", path);
+function PhotoPlaceholder({ gender }: { gender: string }) {
+  const isGirl = gender === "أنثى";
+
   return (
-    <div className="h-16 w-16 overflow-hidden rounded-xl border border-border bg-secondary">
-      <StorageImage url={url} alt="" className="h-full w-full object-cover" />
+    <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-xl border ${isGirl ? "border-pink-200 bg-pink-50" : "border-blue-200 bg-blue-50"}`}>
+      <span role="img" aria-label={isGirl ? "فتاة" : "فتى"} className="text-[27px] leading-none">
+        {isGirl ? "👧" : "👦"}
+      </span>
     </div>
   );
 }
@@ -148,6 +151,7 @@ function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [genderFilter, setGenderFilter] = useState("all");
   const [selected, setSelected] = useState<Registration | null>(null);
   const [certificateOpen, setCertificateOpen] = useState(false);
   const [downloadingCertificate, setDownloadingCertificate] = useState(false);
@@ -170,6 +174,8 @@ function AdminDashboard() {
       }
       return (data ?? []) as unknown as Registration[];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const photoUrl = useSignedUrl("student-photos", selected?.photo_url);
@@ -185,9 +191,10 @@ function AdminDashboard() {
         !q || r.full_name.includes(q) || r.guardian_phone.includes(q) || r.guardian_name.includes(q);
       const matchLevel = levelFilter === "all" || r.education_level === levelFilter;
       const matchStatus = statusFilter === "all" || r.status === statusFilter;
-      return matchQ && matchLevel && matchStatus;
+      const matchGender = genderFilter === "all" || r.gender === genderFilter;
+      return matchQ && matchLevel && matchStatus && matchGender;
     });
-  }, [registrations, search, levelFilter, statusFilter]);
+  }, [registrations, search, levelFilter, statusFilter, genderFilter]);
 
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("registrations").update({ status }).eq("id", id);
@@ -198,7 +205,11 @@ function AdminDashboard() {
     }
     toast.success("تم تحديث الحالة");
     setSelected((prev) => (prev && prev.id === id ? { ...prev, status } : prev));
-    queryClient.invalidateQueries({ queryKey: ["registrations"] });
+    queryClient.setQueryData<Registration[]>(["registrations"], (current) =>
+      current?.map((registration) =>
+        registration.id === id ? { ...registration, status } : registration,
+      ),
+    );
   };
 
   const downloadCertificate = async () => {
@@ -337,6 +348,16 @@ function AdminDashboard() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={genderFilter} onValueChange={setGenderFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="الجنس" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">كلا الجنسين</SelectItem>
+            <SelectItem value="ذكر">ذكر</SelectItem>
+            <SelectItem value="أنثى">أنثى</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger>
             <SelectValue placeholder="الحالة" />
@@ -391,10 +412,22 @@ function AdminDashboard() {
                 className="cursor-pointer"
               >
                 <TableCell className="text-center">
-                  <Thumb path={r.photo_url} />
+                  <PhotoPlaceholder gender={r.gender} />
                 </TableCell>
                 <TableCell className="text-center font-semibold">{r.full_name}</TableCell>
-                <TableCell className="text-center text-primary">{STATUS_LABEL[r.status] ?? r.status}</TableCell>
+                <TableCell className="text-center">
+                  {r.status === "accepted" ? (
+                    <a
+                      href={`sms:${r.guardian_phone.trim().replace(/[\s().-]/g, "")}?body=${encodeURIComponent(`تم بحمد الله قبول التسجيل في المدرسة القرآنية للطالب(ة) ${r.full_name} — إعطي وقتك للقرآن يعطيك البركة في وقتك`)}`}
+                      onClick={(event) => event.stopPropagation()}
+                      className="font-semibold text-green-700 underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700"
+                    >
+                      {STATUS_LABEL[r.status]}
+                    </a>
+                  ) : (
+                    <span className="text-primary">{STATUS_LABEL[r.status] ?? r.status}</span>
+                  )}
+                </TableCell>
                 <TableCell className="text-center text-sm text-muted-foreground">
                   {new Date(r.created_at).toLocaleDateString("ar")}
                 </TableCell>
